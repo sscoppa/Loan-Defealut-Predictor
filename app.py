@@ -236,7 +236,12 @@ with col2:
     )
     CNT_CHILDREN = st.number_input("Number of Children", 0, 20, 0, 1)
     CNT_FAM_MEMBERS = st.number_input(
-        "Number of Family Members", 1.0, 20.0, 2.0, 1.0
+        "Number of People You Live With",
+        min_value=1.0,
+        max_value=20.0,
+        value=2.0,
+        step=1.0,
+        help="Total number of people in your household (including you).",
     )
 
 st.markdown("</div>", unsafe_allow_html=True)
@@ -249,7 +254,7 @@ st.markdown(
     <div class="section-card">
         <div class="section-title">Financial Information</div>
         <div class="section-subtitle">
-            Income, credit amount, and payment structure for the current application.
+            Income, loan size, and payment structure for the current application.
         </div>
     """,
     unsafe_allow_html=True,
@@ -269,25 +274,27 @@ with col3:
 
 with col4:
     AMT_CREDIT = st.number_input(
-        "Total Credit Amount (USD)",
+        "Total Loan Amount (USD)",
         0.0, 5_000_000.0, 500_000.0, 10_000.0,
+        help="Total principal amount you are borrowing.",
     )
     AMT_GOODS_PRICE = st.number_input(
         "Goods Price (if applicable, USD)",
         0.0, 5_000_000.0, 500_000.0, 10_000.0,
+        help="If the loan is for a specific purchase (e.g., car), enter that price.",
     )
 
 st.markdown("</div>", unsafe_allow_html=True)
 
 # --------------------------------------------------------
-# TIMELINE + EXTERNAL SCORES
+# TIMELINE + EXTERNAL SCORES (friendlier)
 # --------------------------------------------------------
 st.markdown(
     """
     <div class="section-card">
         <div class="section-title">History & External Scores</div>
         <div class="section-subtitle">
-            Approximate timing and external risk signals associated with the applicant.
+            Approximate timing and overall external risk signals associated with the applicant.
         </div>
     """,
     unsafe_allow_html=True,
@@ -306,12 +313,29 @@ with col5:
     )
 
 with col6:
-    EXT_SOURCE_1 = st.slider("External Score 1 (0–1)", 0.0, 1.0, 0.5, 0.01)
-    EXT_SOURCE_2 = st.slider("External Score 2 (0–1)", 0.0, 1.0, 0.5, 0.01)
-    EXT_SOURCE_3 = st.slider("External Score 3 (0–1)", 0.0, 1.0, 0.5, 0.01)
-    REGION_POPULATION_RELATIVE = st.slider(
-        "Region Population Relative (0 = least dense, 1 = most dense)",
-        0.0, 1.0, 0.02, 0.01,
+    credit_profile = st.select_slider(
+        "Overall Credit Profile",
+        options=[
+            "Very weak / limited",
+            "Weak",
+            "Average",
+            "Good",
+            "Excellent",
+        ],
+        value="Average",
+        help="A simplified way to represent the applicant's overall creditworthiness.",
+    )
+
+    location_type = st.selectbox(
+        "Where do you live?",
+        [
+            "Rural / small town",
+            "Suburban area",
+            "Urban / city",
+            "Major metro / very dense",
+        ],
+        index=1,
+        help="General type of area where the applicant lives.",
     )
 
 # Convert to negative days (dataset convention)
@@ -319,6 +343,25 @@ DAYS_BIRTH = -int(age_years * 365)
 DAYS_EMPLOYED = -int(years_employed * 365)
 DAYS_REGISTRATION = -int(years_since_registration * 365)
 DAYS_ID_PUBLISH = -int(years_since_id_publish * 365)
+
+# Map friendly controls -> model features for external scores
+credit_mapping = {
+    "Very weak / limited": (0.10, 0.10, 0.10),
+    "Weak": (0.25, 0.25, 0.25),
+    "Average": (0.50, 0.50, 0.50),
+    "Good": (0.70, 0.70, 0.70),
+    "Excellent": (0.90, 0.90, 0.90),
+}
+EXT_SOURCE_1, EXT_SOURCE_2, EXT_SOURCE_3 = credit_mapping[credit_profile]
+
+# Map location type -> region population relative
+region_mapping = {
+    "Rural / small town": 0.02,
+    "Suburban area": 0.15,
+    "Urban / city": 0.40,
+    "Major metro / very dense": 0.70,
+}
+REGION_POPULATION_RELATIVE = region_mapping[location_type]
 
 st.markdown("</div>", unsafe_allow_html=True)
 
@@ -490,4 +533,3 @@ with st.expander("About the Model & Methodology", expanded=False):
         - In a production system, human underwriters, compliance policies, and additional data would always be layered on top.
         """
     )
-
