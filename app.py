@@ -508,28 +508,38 @@ with st.expander("About the Model & Methodology", expanded=False):
         **Dataset**
 
         - Home Credit Default Risk dataset (Kaggle)
-        - Includes demographic, employment, credit history, and application-level features
-        - Target: whether a client defaulted on their loan (`TARGET` = 1)
+        - Contains demographic, employment, financial, and application-level variables
+        - Target variable: whether a borrower defaulted (`TARGET` = 1)
 
         **Modeling Approach**
 
         - Train/test split on historical applications
-        - Gradient boosting / XGBoost classifier wrapped in a scikit-learn pipeline
-        - Pipeline handles:
-            - Numeric imputation, scaling
+        - XGBoost classifier wrapped in a full scikit-learn preprocessing pipeline
+        - Pipeline includes:
+            - Numeric imputation and scaling
             - One-hot encoding of categorical variables
-            - Model training and probability calibration
+            - Model fitting and probability output calibration
 
-        **Key Evaluation Metrics (test set)**
+        **Model Selection Metric**
 
-        - ROC AUC ≈ 0.90 (ability to separate defaulters vs non-defaulters)
-        - F1-score balances precision (false approvals) and recall (missed risky borrowers)
-        - Emphasis on ranking borrowers by risk rather than a fixed approval threshold
+        - **F1-score was the primary evaluation metric** used to select the final model.
+        - F1 balances:
+            - **Precision**: avoiding false approvals
+            - **Recall**: catching risky applicants
+        - This is appropriate because the dataset is **highly imbalanced** (few borrowers default).
 
-        **How to Interpret This Demo**
+        **Key Test Metrics**
 
-        - The probability shown is the model's estimate that a borrower with this profile would default.
-        - The **risk category** (Low / Medium / High) is a simple banding of that probability.
-        - In a production system, human underwriters, compliance policies, and additional data would always be layered on top.
+        - **F1-score ≈ 0.31** (final model selected using this metric)
+        - **ROC AUC ≈ 0.76** (moderate ability to distinguish high-risk vs low-risk borrowers)
+        - **Accuracy ≈ 0.87**  
+          *(Not used for model selection due to class imbalance—most borrowers do not default.)*
+
+        **Interpretation**
+
+        - The model outputs a **probability of default**, allowing borrowers to be **ranked by risk**.
+        - It is **not** intended to be a single “approve or deny” decision system.
+        - In practice, lenders would apply business thresholds, human oversight, fairness checks, and additional data sources.
         """
     )
+
