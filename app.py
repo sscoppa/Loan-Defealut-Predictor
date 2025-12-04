@@ -313,17 +313,13 @@ with col5:
     )
 
 with col6:
-    credit_profile = st.select_slider(
-        "Overall Credit Profile",
-        options=[
-            "Very weak / limited",
-            "Weak",
-            "Average",
-            "Good",
-            "Excellent",
-        ],
-        value="Average",
-        help="A simplified way to represent the applicant's overall creditworthiness.",
+    credit_score = st.slider(
+        "Overall Credit Score (0–1)",
+        min_value=0.0,
+        max_value=1.0,
+        value=0.5,
+        step=0.01,
+        help="Enter an overall credit-quality score between 0 (very weak) and 1 (excellent).",
     )
 
     location_type = st.selectbox(
@@ -344,15 +340,26 @@ DAYS_EMPLOYED = -int(years_employed * 365)
 DAYS_REGISTRATION = -int(years_since_registration * 365)
 DAYS_ID_PUBLISH = -int(years_since_id_publish * 365)
 
-# Map friendly controls -> model features for external scores
-credit_mapping = {
-    "Very weak / limited": (0.10, 0.10, 0.10),
-    "Weak": (0.25, 0.25, 0.25),
-    "Average": (0.50, 0.50, 0.50),
-    "Good": (0.70, 0.70, 0.70),
-    "Excellent": (0.90, 0.90, 0.90),
+# NEW: Map credit score directly to all three EXT_SOURCE values
+EXT_SOURCE_1 = credit_score
+EXT_SOURCE_2 = credit_score
+EXT_SOURCE_3 = credit_score
+
+# Map location type -> region population relative
+region_mapping = {
+    "Rural / small town": 0.02,
+    "Suburban area": 0.15,
+    "Urban / city": 0.40,
+    "Major metro / very dense": 0.70,
 }
-EXT_SOURCE_1, EXT_SOURCE_2, EXT_SOURCE_3 = credit_mapping[credit_profile]
+REGION_POPULATION_RELATIVE = region_mapping[location_type]
+
+
+# Convert to negative days (dataset convention)
+DAYS_BIRTH = -int(age_years * 365)
+DAYS_EMPLOYED = -int(years_employed * 365)
+DAYS_REGISTRATION = -int(years_since_registration * 365)
+DAYS_ID_PUBLISH = -int(years_since_id_publish * 365)
 
 # Map location type -> region population relative
 region_mapping = {
